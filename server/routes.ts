@@ -93,8 +93,11 @@ export async function registerRoutes(
     if (!req.isAuthenticated()) return res.status(401).send();
     try {
       const input = api.requests.create.input.parse(req.body);
-      // Force userId from session
-      const request = await storage.createRequest({ ...input, userId: (req.user as User).id });
+      const user = req.user as User;
+      const request = await storage.createRequest({ 
+        ...input, 
+        userId: user.id 
+      });
       res.status(201).json(request);
     } catch (err) {
         if (err instanceof z.ZodError) {

@@ -48,7 +48,7 @@ export const reportsRelations = relations(reports, ({ one }) => ({
 
 // Schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
-export const insertRequestSchema = createInsertSchema(requests).omit({ id: true, createdAt: true, status: true });
+export const insertRequestSchema = createInsertSchema(requests).omit({ id: true, createdAt: true, status: true, userId: true });
 export const insertReportSchema = createInsertSchema(reports).omit({ id: true, createdAt: true, status: true });
 
 // Types
