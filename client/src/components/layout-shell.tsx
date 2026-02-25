@@ -1,5 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useTranslation } from "@/hooks/use-translation";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { 
   Building2, 
   FileText, 
@@ -8,13 +10,15 @@ import {
   User, 
   Menu,
   X,
-  LayoutDashboard
+  LayoutDashboard,
+  Megaphone
 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -22,12 +26,13 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
   const navItems = user?.role === "admin" 
     ? [
-        { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+        { href: "/admin", label: t("admin.adminDashboard"), icon: LayoutDashboard },
       ]
     : [
-        { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { href: "/dashboard/requests", label: "My Requests", icon: FileText },
-        { href: "/dashboard/report", label: "Report Issue", icon: AlertTriangle },
+        { href: "/dashboard", label: t("citizen.citizenDashboard"), icon: LayoutDashboard },
+        { href: "/dashboard/requests", label: t("citizen.myRequests"), icon: FileText },
+        { href: "/dashboard/report", label: t("citizen.newReport"), icon: AlertTriangle },
+        { href: "/dashboard/announcements", label: "City Announcements", icon: Megaphone },
       ];
 
   const NavLink = ({ item, mobile = false }: { item: typeof navItems[0], mobile?: boolean }) => (
@@ -67,7 +72,9 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-border/50">
+        <div className="p-4 border-t border-border/50 space-y-4">
+          <LanguageSwitcher />
+          
           <div className="bg-secondary/50 rounded-xl p-4 mb-4">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
@@ -85,7 +92,7 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             className="w-full flex items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
           >
             <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
+            <span>{t("common.logout")}</span>
           </button>
         </div>
       </aside>
@@ -99,12 +106,15 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
             </div>
             <span className="font-display font-bold text-lg">Smart Baladiya</span>
           </Link>
-          <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg hover:bg-secondary text-foreground transition-colors"
-          >
-            {isMobileMenuOpen ? <X /> : <Menu />}
-          </button>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-lg hover:bg-secondary text-foreground transition-colors"
+            >
+              {isMobileMenuOpen ? <X /> : <Menu />}
+            </button>
+          </div>
         </header>
 
         {/* Mobile Menu Overlay */}

@@ -1,42 +1,65 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api, type InsertUser } from "@shared/routes";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { useEffect, useState } from "react";
+
+interface User {
+  id: string;
+  cin: string;
+  fullName: string;
+  role: "admin" | "citizen";
+}
+
+const STORAGE_KEY = "auth_user";
+
+// Mock credentials
+const VALID_CREDENTIALS = {
+  client: { password: "client", role: "citizen" as const },
+  admin: { password: "admin", role: "admin" as const },
+};
 
 export function useAuth() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const [isLoadingState, setIsLoadingState] = useState(true);
 
+  // Load user from localStorage on mount
   const { data: user, isLoading } = useQuery({
-    queryKey: [api.auth.me.path],
+    queryKey: ["auth_user"],
     queryFn: async () => {
-      const res = await fetch(api.auth.me.path);
-      if (res.status === 401) return null;
-      if (!res.ok) throw new Error("Failed to fetch user");
-      return api.auth.me.responses[200].parse(await res.json());
+      // Simulate async operation
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? (JSON.parse(stored) as User) : null;
     },
     retry: false,
   });
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: { cin: string; password: string }) => {
-      const res = await fetch(api.auth.login.path, {
-        method: api.auth.login.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
-      });
+      // Simulate network delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-      if (!res.ok) {
-        if (res.status === 401) {
-          throw new Error("Invalid CIN or password");
-        }
-        throw new Error("Login failed");
+      const cin = credentials.cin.toLowerCase();
+      const validCred = VALID_CREDENTIALS[cin as keyof typeof VALID_CREDENTIALS];
+
+      if (!validCred || validCred.password !== credentials.password) {
+        throw new Error("Invalid credentials. Try 'client/client' or 'admin/admin'");
       }
-      return api.auth.login.responses[200].parse(await res.json());
+
+      const user: User = {
+        id: `user_${cin}`,
+        cin: credentials.cin,
+        fullName: cin === "client" ? "Client User" : "Administrator",
+        role: validCred.role,
+      };
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      return user;
     },
     onSuccess: (data) => {
-      queryClient.setQueryData([api.auth.me.path], data);
+      queryClient.setQueryData(["auth_user"], data);
       toast({
         title: "Welcome back",
         description: `Logged in as ${data.fullName}`,
@@ -53,28 +76,8 @@ export function useAuth() {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (data: InsertUser) => {
-      const res = await fetch(api.auth.register.path, {
-        method: api.auth.register.method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!res.ok) {
-        if (res.status === 400) {
-          const error = api.auth.register.responses[400].parse(await res.json());
-          throw new Error(error.message);
-        }
-        throw new Error("Registration failed");
-      }
-      return api.auth.register.responses[201].parse(await res.json());
-    },
-    onSuccess: () => {
-      toast({
-        title: "Account created",
-        description: "You can now log in with your credentials.",
-      });
-      // Don't auto-login, let user login explicitly or switch tabs
+    mutationFn: async () => {
+      throw new Error("Registration is disabled. Use login instead.");
     },
     onError: (error: Error) => {
       toast({
@@ -87,10 +90,10 @@ export function useAuth() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await fetch(api.auth.logout.path, { method: api.auth.logout.method });
+      localStorage.removeItem(STORAGE_KEY);
     },
     onSuccess: () => {
-      queryClient.setQueryData([api.auth.me.path], null);
+      queryClient.setQueryData(["auth_user"], null);
       setLocation("/");
       toast({
         title: "Logged out",

@@ -10,6 +10,7 @@ import AuthPage from "@/pages/auth";
 import CitizenDashboard from "@/pages/dashboard/citizen-home";
 import RequestsPage from "@/pages/dashboard/requests";
 import ReportPage from "@/pages/dashboard/report";
+import AnnouncementsPage from "@/pages/dashboard/announcements";
 import AdminDashboard from "@/pages/admin/dashboard";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -52,6 +53,9 @@ function Router() {
       </Route>
       <Route path="/dashboard/report">
         <ProtectedRoute component={ReportPage} />
+      </Route>
+      <Route path="/dashboard/announcements">
+        <ProtectedRoute component={AnnouncementsPage} />
       </Route>
 
       {/* Admin Route */}
